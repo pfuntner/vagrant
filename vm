@@ -1,0 +1,30 @@
+#! /usr/bin/env python
+
+import logging
+import argparse
+import subprocess
+
+def run(cmd):
+  p = subprocess.Popen(cmd)
+  rc = p.wait()
+  log.log(logging.ERROR if rc != 0 else logging.DEBUG, '{cmd}: {rc}'.format(**locals()))
+  return rc
+
+parser = argparse.ArgumentParser(description='vagrant/virtualbox frontend')
+
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--up', dest='up', action='store_true', help='Bring (resume) up VM')
+group.add_argument('--down', dest='down', action='store_true', help='Bring (suspend) down VM')
+
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable debugging')
+args = parser.parse_args()
+
+logging.basicConfig(format='%(asctime)s %(levelname)s %(pathname)s:%(lineno)d %(msg)s')
+log = logging.getLogger()
+log.setLevel(logging.DEBUG if args.verbose else logging.WARNING)
+
+cmd = [
+  'vagrant',
+  'resume' if args.up else 'suspend'
+]     
+rc = run(cmd)
