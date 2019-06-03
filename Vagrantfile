@@ -12,23 +12,22 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "ubuntu/trusty64"
 
   # I borrowed the statements to create the two distinct nodes from https://www.edureka.co/blog/10-steps-to-create-multiple-vms-using-vagrant/
 
   # The page included config.vm.network which gave me trouble when I tried to use it but I didn't need one at all for a single simple default vm.
   # config.vm.network "public_network"
 
-  config.vm.define "ansible" do |node|
-    config.vm.provider "virtualbox" do |node|
-      node.name = "ansible"
-    end
+  config.vm.define :ansible do |ansible|
+    ansible.vm.box = "ubuntu/trusty64"
+    ansible.vm.network :private_network, ip: "10.0.0.10"
+    ansible.vm.hostname = "ansible"
   end
 
-  config.vm.define "vanilla" do |node|
-    config.vm.provider "virtualbox" do |node|
-      node.name = "vanilla"
-    end
+  config.vm.define :vanilla do |vanilla|
+    vanilla.vm.box = "ubuntu/trusty64"
+    vanilla.vm.network :private_network, ip: "10.0.0.11"
+    vanilla.vm.hostname = "vanilla"
   end
 
   # Disable automatic box update checking. If you disable this, then
