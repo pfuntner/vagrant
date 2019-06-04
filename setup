@@ -1,0 +1,44 @@
+function push_ssh_key {
+  key=$1
+  port=$2
+
+  ssh $SSH_OPTS -i $key -p $port vagrant@$HOST_IP cat \>\> .ssh/authorized_keys < $HOME/.ssh/id_rsa.pub
+}
+
+SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+HOST_IP=127.0.0.1
+
+ANSIBLE_KEY=./.vagrant/machines/ansible/virtualbox/private_key
+ANSIBLE_PORT=2222
+ANSIBLE_IP=10.0.0.10
+
+VANILLA_KEY=./.vagrant/machines/vanilla/virtualbox/private_key
+VANILLA_PORT=2200
+VANILLA_IP=10.0.0.11
+
+set -x
+set -e
+
+push_ssh_key $ANSIBLE_KEY $ANSIBLE_PORT
+push_ssh_key $VANILLA_KEY $VANILLA_PORT
+
+echo -e '\n\n\n' | ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP ssh-keygen
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP tar -czvf - .ssh/id_rsa\* | ssh $SSH_OPTS -p $VANILLA_PORT vagrant@$HOST_IP tar -xzvf -
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP cat .ssh/id_rsa.pub \>\> .ssh/authorized_keys
+ssh $SSH_OPTS -p $VANILLA_PORT vagrant@$HOST_IP cat .ssh/id_rsa.pub \>\> .ssh/authorized_keys
+
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP cd /tmp \; wget https://bootstrap.pypa.io/get-pip.py \; sudo python /tmp/get-pip.py
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP sudo apt install -y ansible git
+ssh $SSH_OPTS -p $VANILLA_PORT vagrant@$HOST_IP sudo apt install -y git
+
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP mkdir repos \; cd repos \; git clone https://github.com/pfuntner/toys.git \; ln -s \$HOME/repos/toys/bin \$HOME/bin
+ssh $SSH_OPTS -p $VANILLA_PORT vagrant@$HOST_IP mkdir repos \; cd repos \; git clone https://github.com/pfuntner/toys.git \; ln -s \$HOME/repos/toys/bin \$HOME/bin
+
+echo -e "10.0.0.11 vanilla" | ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP sudo bash -c '"cat >> /etc/hosts"'
+
+ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP sudo mkdir -p /etc/ansible
+echo -e "localhost\nvanilla" | ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP sudo bash -c '"cat > /etc/ansible/hosts"'
+
+# ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP yes \| ssh localhost true
+# ssh $SSH_OPTS -p $ANSIBLE_PORT vagrant@$HOST_IP yes \| ssh vanilla true
