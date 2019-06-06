@@ -1,0 +1,12 @@
+- name: Mess with pids module
+  hosts: vagrant
+  gather_facts: no
+  tasks:
+    - name: Getting pids
+      pids:
+        name: python
+      register: pids
+    
+    - name: Printing pids
+      debug:
+        msg: "Process ids: {{pids.pids|join(',')}}"

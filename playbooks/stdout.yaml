@@ -1,0 +1,11 @@
+- name: Mess with stdout
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Getting output
+      command: date
+      register: command
+    
+    - name: Printing output
+      debug:
+        msg: "stdout: {{command.stdout}}"

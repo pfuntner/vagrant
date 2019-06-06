@@ -1,0 +1,15 @@
+- name: Mess with stdout
+  hosts: vagrant
+  gather_facts: no
+  tasks:
+    - name: Getting output
+      command: cat /etc/os-release
+      register: command
+    
+    - name: Printing output 1
+      debug:
+        var: command.stdout
+    
+    - name: Printing output 2
+      debug:
+        var: command.stdout_lines
