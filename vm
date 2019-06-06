@@ -1,10 +1,12 @@
 #! /usr/bin/env python
 
+import time
 import logging
 import argparse
 import subprocess
 
 def run(cmd):
+  log.info(cmd)
   p = subprocess.Popen(cmd)
   rc = p.wait()
   log.log(logging.ERROR if rc != 0 else logging.DEBUG, '{cmd}: {rc}'.format(**locals()))
@@ -12,19 +14,33 @@ def run(cmd):
 
 parser = argparse.ArgumentParser(description='vagrant/virtualbox frontend')
 
-group = parser.add_mutually_exclusive_group()
-group.add_argument('--up', dest='up', action='store_true', help='Bring (resume) up VM')
-group.add_argument('--down', dest='down', action='store_true', help='Bring (suspend) down VM')
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('--up', '--start', dest='up', action='store_true', help='Bring (resume) up VM')
+group.add_argument('--down', '--stop', dest='down', action='store_true', help='Bring (suspend) down VM')
+group.add_argument('--check', '--status', dest='check', action='store_true', help='Ping the VMs through Ansible')
 
 parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable debugging')
 args = parser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(pathname)s:%(lineno)d %(msg)s')
 log = logging.getLogger()
-log.setLevel(logging.DEBUG if args.verbose else logging.WARNING)
+log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
-cmd = [
-  'vagrant',
-  'resume' if args.up else 'suspend'
-]     
-rc = run(cmd)
+rc = -1
+
+if args.up or args.down:
+  rc = run([
+    'vagrant',
+    'resume' if args.up else 'suspend'
+  ])
+  if rc != 0:
+    exit(rc)
+
+if args.up:
+  log.info('Waiting for VMs to spin up')
+  time.sleep(10) 
+
+if args.up or args.check:
+  rc = run(['ansible', 'all', '-m', 'ping'])
+
+exit(rc)
