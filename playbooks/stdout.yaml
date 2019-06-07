@@ -1,5 +1,5 @@
 - name: Mess with stdout
-  hosts: all
+  hosts: localhost
   gather_facts: no
   tasks:
     - name: Getting output
@@ -8,4 +8,4 @@
     
     - name: Printing output
       debug:
-        msg: "stdout: {{command.stdout}}"
+        var: command
