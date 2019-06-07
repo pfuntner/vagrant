@@ -13,3 +13,6 @@
     - name: Printing output 2
       debug:
         msg: "bar: {{bar}}"
+    - name: Debugging
+      debug:
+        var: bar
