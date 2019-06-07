@@ -38,9 +38,13 @@ def list_running_hosts():
 def get_host_details(host):
     cmd = "vagrant ssh-config {}".format(host)
     log.debug('cmd: {cmd!r}'.format(**locals()))
-    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    stdout = p.stdout.read()
-    log.debug('stdout: {stdout!r}'.format(**locals()))
+    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    rc = p.wait()
+    ok = (rc == 0) and (not stderr)
+    log.log(logging.DEBUG if ok else logging.WARNING, '{cmd!r}: {rc}, {stdout!r}, {stderr!r}'.format(**locals()))
+    if not ok:
+      return {}
 
     config = paramiko.SSHConfig()
     config.parse(StringIO.StringIO(stdout))
