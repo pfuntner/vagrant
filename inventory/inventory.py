@@ -2,6 +2,12 @@
 # Adapted from Mark Mandel's implementation
 # https://github.com/ansible/ansible/blob/stable-2.1/contrib/inventory/vagrant.py
 
+"""
+I originally got this script from https://github.com/pfuntner/ansiblebook/blob/master/ch03/inventory/vagrant.py and made my own changes to it.
+
+Later in reading the book, I learned about a repository for dynamic inventory scripts for various purposes and found https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/vagrant.py which is superior to the one in the book.
+"""
+
 import argparse
 import json
 import paramiko
