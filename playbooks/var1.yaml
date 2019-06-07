@@ -1,0 +1,15 @@
+- name: Mess with stdout
+  hosts: all
+  gather_facts: no
+  vars:
+    foo: bar
+  vars_files:
+    # be aware that relative directories are relative to the directory in which the playbook is found
+    - vars/var.yaml
+  tasks:
+    - name: Printing output 1
+      debug:
+        msg: "foo: {{foo}}"
+    - name: Printing output 2
+      debug:
+        msg: "bar: {{bar}}"

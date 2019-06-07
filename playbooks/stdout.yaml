@@ -3,7 +3,7 @@
   gather_facts: no
   tasks:
     - name: Getting output
-      command: date
+      command: pwd
       register: command
     
     - name: Printing output
