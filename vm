@@ -5,12 +5,15 @@ import logging
 import argparse
 import subprocess
 
-def run(cmd):
-  log.info(cmd)
-  p = subprocess.Popen(cmd)
+def run(cmd, capture=False):
+  if isinstance(cmd, basestring):
+    cmd = cmd.split()
+  log.debug(cmd)
+  p = subprocess.Popen(cmd, stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE if capture else None)
+  (stdout, stderr) = p.communicate()
   rc = p.wait()
-  log.log(logging.ERROR if rc != 0 else logging.DEBUG, '{cmd}: {rc}'.format(**locals()))
-  return rc
+  log.log(logging.ERROR if rc != 0 else logging.DEBUG, '{cmd}: {rc}, {stdout!r}, {stderr!r}'.format(**locals()))
+  return (rc, stdout, stderr)
 
 parser = argparse.ArgumentParser(description='vagrant/virtualbox frontend')
 
@@ -28,8 +31,13 @@ log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
 rc = -1
 
+if args.up or args.check:
+  (rc, stdout, stderr) = run('which ansible', capture=True)
+  if (rc != 0) or stderr:
+    parser.error('Please source `ansible_setup` to enable ansible commands')
+
 if args.up or args.down:
-  rc = run([
+  (rc, stdout, stderr) = run([
     'vagrant',
     'resume' if args.up else 'suspend'
   ])
@@ -37,10 +45,10 @@ if args.up or args.down:
     exit(rc)
 
 if args.up:
-  log.info('Waiting for VMs to spin up')
+  log.info('Waiting for VMs to spin up before pinging them')
   time.sleep(10) 
 
 if args.up or args.check:
-  rc = run(['ansible', 'all', '-m', 'ping'])
+  (rc, stdout, stderr) = run(['ansible', 'all', '-m', 'ping'])
 
 exit(rc)
