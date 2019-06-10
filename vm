@@ -19,8 +19,9 @@ parser = argparse.ArgumentParser(description='vagrant/virtualbox frontend')
 
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument('--up', '--start', dest='up', action='store_true', help='Bring (resume) up VM')
+group.add_argument('--reload', '--fix', dest='reload', action='store_true', help='Reload VM that doesn\'t want to start')
 group.add_argument('--down', '--stop', dest='down', action='store_true', help='Bring (suspend) down VM')
-group.add_argument('--check', '--status', dest='check', action='store_true', help='Ping the VMs through Ansible')
+group.add_argument('--check', '--status', '--ping', dest='check', action='store_true', help='Ping the VMs through Ansible')
 
 parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='Enable debugging')
 args = parser.parse_args()
@@ -31,24 +32,24 @@ log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
 rc = -1
 
-if args.up or args.check:
+if args.up or args.check or args.reload:
   (rc, stdout, stderr) = run('which ansible', capture=True)
   if (rc != 0) or stderr:
     parser.error('Please source `ansible_setup` to enable ansible commands')
 
-if args.up or args.down:
+if args.up or args.down or args.reload:
   (rc, stdout, stderr) = run([
     'vagrant',
-    'resume' if args.up else 'suspend'
+    'resume' if args.up else ('reload' if args.reload else 'suspend')
   ])
   if rc != 0:
     exit(rc)
 
-if args.up:
+if args.up or args.reload:
   log.info('Waiting for VMs to spin up before pinging them')
   time.sleep(10) 
 
-if args.up or args.check:
+if args.up or args.check or args.reload:
   (rc, stdout, stderr) = run(['ansible', 'all', '-m', 'ping'])
 
 exit(rc)
