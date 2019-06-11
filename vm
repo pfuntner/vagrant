@@ -38,12 +38,21 @@ if args.up or args.check or args.reload:
     parser.error('Please source `ansible_setup` to enable ansible commands')
 
 if args.up or args.down or args.reload:
-  (rc, stdout, stderr) = run([
-    'vagrant',
-    'resume' if args.up else ('reload' if args.reload else 'suspend')
-  ])
-  if rc != 0:
-    exit(rc)
+  done = False
+  while not done:
+    done = True
+    (rc, stdout, stderr) = run([
+      'vagrant',
+      'resume' if args.up else ('reload' if args.reload else 'suspend')
+    ])
+    if rc != 0:
+      if args.up:
+        log.info('`vagrant up` failed, trying `vagrant reload`')
+        done = False
+        args.up = False
+        args.reload = True
+      else:
+        exit(rc)
 
 if args.up or args.reload:
   log.info('Waiting for VMs to spin up before pinging them')
